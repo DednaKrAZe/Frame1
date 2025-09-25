@@ -9,12 +9,11 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.19" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.20" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Context" />
-      <Folder Include="Controllers" />
       <Folder Include="Migrations" />
     </ItemGroup>
 
