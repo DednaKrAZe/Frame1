@@ -2,8 +2,8 @@ namespace Engineering.Models;
 
 public enum Role
 {
-    Engineer,
-    Manager,
     Director,
+    Manager,
+    Engineer,
     Client
 }
