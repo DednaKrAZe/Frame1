@@ -124,7 +124,7 @@ public class UserController : ControllerBase
 
             if (!string.IsNullOrEmpty(user.PasswordHash))
             {
-                existingUser.PasswordHash = user.PasswordHash;
+                existingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash + existingUser.Login);
             }
 
             if (!string.IsNullOrEmpty(user.Email))
