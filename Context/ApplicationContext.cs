@@ -22,5 +22,17 @@ public class ApplicationContext: DbContext
             .WithMany()
             .HasForeignKey(t => t.ExecutorId)
             .OnDelete(DeleteBehavior.SetNull);
+        
+        modelBuilder.Entity<Task>()
+            .HasOne(t => t.Defect)
+            .WithMany()
+            .HasForeignKey(t => t.DefectId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<Task>()
+            .HasOne(t => t.Project)
+            .WithMany()
+            .HasForeignKey(t => t.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
