@@ -175,4 +175,20 @@ public class UserController : ControllerBase
             return StatusCode(500, $"Internal server error");
         }
     }
+    
+    // получить свой профиль
+    [HttpGet("me")]
+    [Authorize(Roles = "Director, Manager, Engineer, Client")]
+    public async Task<ActionResult<Models.UserResponse>> GetUserMe()
+    {
+        var userId = Int64.Parse(User.Identity.Name);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            _logger.LogWarning("User not found: {UserId}", userId);
+            return NotFound();
+        }
+        _logger.LogInformation("Get user by id: {UserId}", userId);
+        return Ok(user);
+    }
 }
