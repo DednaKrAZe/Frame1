@@ -181,14 +181,23 @@ public class UserController : ControllerBase
     [Authorize(Roles = "Director, Manager, Engineer, Client")]
     public async Task<ActionResult<Models.UserResponse>> GetUserMe()
     {
-        var userId = Int64.Parse(User.Identity.Name);
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (user == null)
+        try
         {
-            _logger.LogWarning("User not found: {UserId}", userId);
-            return NotFound();
+            var userId = Int64.Parse(User.Identity.Name);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found: {UserId}", userId);
+                return NotFound();
+            }
+
+            _logger.LogInformation("Get user by id: {UserId}", userId);
+            return Ok(user);
         }
-        _logger.LogInformation("Get user by id: {UserId}", userId);
-        return Ok(user);
+        catch (Exception e)
+        {
+            _logger.LogError("Error while getting user: {Error}", e.Message);
+            return StatusCode(500, $"Internal server error");
+        }
     }
 }
