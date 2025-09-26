@@ -15,4 +15,12 @@ public class ApplicationContext: DbContext
         Database.EnsureCreated();
     }
     
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Task>()
+            .HasOne(t => t.Executor)
+            .WithMany()
+            .HasForeignKey(t => t.ExecutorId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
 }
