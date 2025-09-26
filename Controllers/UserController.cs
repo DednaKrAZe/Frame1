@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 namespace Engineering.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Manager, Director")]
 [Route("users")]
 public class UserController : ControllerBase
 {
@@ -36,6 +36,7 @@ public class UserController : ControllerBase
     
     // получить список пользователей
     [HttpGet]
+    [Authorize(Roles = "Manager, Director")]
     public async Task<ActionResult<List<UserResponse>>> GetAllUsers()
     {
         var users = await _context.Users.Select(u => ConvertUserToResponse(u)).ToListAsync();
@@ -45,7 +46,7 @@ public class UserController : ControllerBase
     
     // получить пользователя по id
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserResponse>> GetUserById(int id)
+    public async Task<ActionResult<UserResponse>> GetUserById([FromRoute] int id)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         if (user == null)
@@ -99,7 +100,7 @@ public class UserController : ControllerBase
     
     // обновить существующего пользователя
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateUser(int id, [FromBody] Models.UserRequest user)
+    public async Task<ActionResult> UpdateUser([FromRoute] int id, [FromBody] Models.UserRequest user)
     {
         try
         {
@@ -154,7 +155,7 @@ public class UserController : ControllerBase
 
     // удалить пользователя
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteUser(int id)
+    public async Task<ActionResult> DeleteUser([FromRoute] int id)
     {
         try
         {
