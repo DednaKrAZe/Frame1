@@ -14,10 +14,12 @@ namespace Engineering.Controllers;
 public class UserController : ControllerBase
 {
     private readonly ApplicationContext _context;
+    private readonly ILogger<UserController> _logger;
 
-    public UserController(ApplicationContext context)
+    public UserController(ApplicationContext context, ILogger<UserController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     private UserResponse ConvertUserToResponse(User user)
@@ -37,7 +39,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<List<UserResponse>>> GetAllUsers()
     {
         var users = await _context.Users.Select(u => ConvertUserToResponse(u)).ToListAsync();
-        Console.WriteLine("Get all users");
+        _logger.LogInformation("Get all users");
         return Ok(users);
     }
     
@@ -48,12 +50,12 @@ public class UserController : ControllerBase
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         if (user == null)
         {
-            Console.WriteLine("User not found:" + id);
+            _logger.LogWarning("User not found: {UserId}", id);
             return NotFound();
         }
 
         var response = ConvertUserToResponse(user);
-        Console.WriteLine("Get user by id:" + id);
+        _logger.LogInformation("Get user by id: {UserId}", id);
         return Ok(response);
     }
     
@@ -67,7 +69,7 @@ public class UserController : ControllerBase
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Login == user.Login);
             if (existingUser != null)
             {
-                Console.WriteLine("User with login already exists:" + user.Login);
+                _logger.LogWarning("User with login already exists {UserLogin}", user.Login);
                 return Conflict();
             }
             
@@ -87,11 +89,11 @@ public class UserController : ControllerBase
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error while deleting user: " + e.Message);
+            _logger.LogError("Error while creating user: {Error}", e.Message);
             return StatusCode(500, $"Internal server error");
         }
         
-        Console.WriteLine("User created:" + user.Login);
+        _logger.LogInformation("User created");
         return Created();
     }
     
@@ -105,7 +107,7 @@ public class UserController : ControllerBase
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
             if (existingUser == null)
             {
-                Console.WriteLine("User not found:" + id);
+                _logger.LogWarning("User not found: {UserId}", id);
                 return NotFound();
             }
 
@@ -140,12 +142,12 @@ public class UserController : ControllerBase
             }
 
             await _context.SaveChangesAsync();
-            Console.WriteLine("User updated:" + id);
+            _logger.LogInformation("User updated: {UserId}", id);
             return NoContent();
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error while deleting user: " + e.Message);
+            _logger.LogError("Error while updating user: {Error}", e.Message);
             return StatusCode(500, $"Internal server error");
         }
     }
@@ -163,12 +165,12 @@ public class UserController : ControllerBase
                 await _context.SaveChangesAsync();
             }
 
-            Console.WriteLine("User deleted:" + id);
+            _logger.LogInformation("User deleted: {UserId}", id);
             return NoContent();
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error while deleting user: " + e.Message);
+            _logger.LogError("Error while deleting user: {Error}", e.Message);
             return StatusCode(500, $"Internal server error");
         }
     }
