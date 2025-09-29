@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
                 Name = "admin",
                 Email = "admin@admin.com",
                 Login = "admin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(BCrypt.Net.BCrypt.HashPassword("admin") + "admin"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"),
                 Phone = "+78005553535",
                 Role = 0
             });
@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
                 return NotFound();
             }
 
-            if (!user.PasswordHash.Equals(BCrypt.Net.BCrypt.HashPassword(login.PasswordHash)))
+            if (!BCrypt.Net.BCrypt.Verify(login.PasswordHash, user.PasswordHash))
             {
                 _logger.LogWarning("Wrong password");
                 return Unauthorized();
