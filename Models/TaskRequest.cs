@@ -10,5 +10,5 @@ public class TaskRequest
     public DateOnly? Term { get; set; }
     public Status? Status { get; set; }
     public string? Comments { get; set; }
-    public SqlMoney? Investment { get; set; }
+    public decimal? Investment { get; set; }
 }

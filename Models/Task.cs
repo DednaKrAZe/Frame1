@@ -14,7 +14,8 @@ public class Task
     [DefaultValue(0)]
     public required Status Status { get; set; }
     public string? Comments { get; set; }
-    public SqlMoney Investment { get; set; }
+    [DefaultValue(0)]
+    public decimal Investment { get; set; }
     [DefaultValue(true)]
     public bool IsActual { get; set; }
     public Defect? Defect { get; set; }
