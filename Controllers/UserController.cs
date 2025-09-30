@@ -3,13 +3,10 @@ using Engineering.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
-using System.Net.Http.Headers;
 
 namespace Engineering.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Manager, Director")]
 [Route("users")]
 public class UserController : ControllerBase
 {
@@ -46,6 +43,7 @@ public class UserController : ControllerBase
     
     // получить пользователя по id
     [HttpGet("{id}")]
+    [Authorize(Roles = "Manager, Director")]
     public async Task<ActionResult<UserResponse>> GetUserById([FromRoute] int id)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
@@ -70,7 +68,7 @@ public class UserController : ControllerBase
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Login == user.Login);
             if (existingUser != null)
             {
-                _logger.LogWarning("User with login already exists {UserLogin}", user.Login);
+                _logger.LogWarning("User with login already exists: {UserLogin}", user.Login);
                 return Conflict();
             }
             
@@ -100,10 +98,18 @@ public class UserController : ControllerBase
     
     // обновить существующего пользователя
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<ActionResult> UpdateUser([FromRoute] int id, [FromBody] Models.UserRequest user)
     {
         try
         {
+            var userId = Int64.Parse(User.Identity.Name);
+            if (!userId.Equals(id))
+            {
+                _logger.LogWarning("User id does not match: {UserId} != {id}", userId, id);
+                return Forbid();
+            }
+            
             user.Id = id;
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
             if (existingUser == null)
@@ -155,10 +161,17 @@ public class UserController : ControllerBase
 
     // удалить пользователя
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<ActionResult> DeleteUser([FromRoute] int id)
     {
         try
         {
+            var userId = Int64.Parse(User.Identity.Name);
+            if (!userId.Equals(id) && !User.IsInRole("Manager") && !User.IsInRole("Director"))
+            {
+                _logger.LogWarning("Forbidden for user {UserId}", userId);
+                return Forbid();
+            }
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user != null)
             {
@@ -178,7 +191,7 @@ public class UserController : ControllerBase
     
     // получить свой профиль
     [HttpGet("me")]
-    [Authorize(Roles = "Director, Manager, Engineer, Client")]
+    [Authorize]
     public async Task<ActionResult<Models.UserResponse>> GetUserMe()
     {
         try

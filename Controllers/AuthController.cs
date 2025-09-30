@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using Task = System.Threading.Tasks.Task;
 
 namespace Engineering.Controllers;
@@ -28,20 +29,6 @@ public class AuthController : ControllerBase
     [Route("login")]
     public async Task<IActionResult> Login([FromBody] Models.Login login)
     {
-        if (!_context.Users.Any())
-        {
-            _context.Users.Add(new User
-            {
-                Name = "admin",
-                Email = "admin@admin.com",
-                Login = "admin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"),
-                Phone = "+78005553535",
-                Role = 0
-            });
-            _context.SaveChanges();
-        }
-
         if (login == null)
         {
             _logger.LogWarning("Null request");
@@ -50,22 +37,22 @@ public class AuthController : ControllerBase
 
         try
         {
-            var user = _context.Users.FirstOrDefault(u => u.Login == login.UserLogin);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Login == login.UserLogin);
 
             if (user == null)
             {
-                _logger.LogWarning("User not found");
+                _logger.LogWarning("User not found: {Login}", login.UserLogin);
                 return NotFound();
             }
 
-            if (!BCrypt.Net.BCrypt.Verify(login.PasswordHash, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(login.PasswordHash + login.UserLogin, user.PasswordHash))
             {
-                _logger.LogWarning("Wrong password");
+                _logger.LogWarning("Wrong password for user: {Login}", login.UserLogin);
                 return Unauthorized();
             }
 
             await Authenticate(user.Id.ToString(), user.Role.ToString());
-            _logger.LogInformation("Login");
+            _logger.LogInformation("Login user: {User}", user.Login);
             return Ok();
         }
         catch (Exception e)
@@ -73,6 +60,16 @@ public class AuthController : ControllerBase
             _logger.LogError("Error while login: {Error}", e.Message);
             return StatusCode(500, $"Internal server error");
         }
+    }
+
+    [HttpPost]
+    [Authorize]
+    [Route("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        _logger.LogInformation("Logout");
+        return Ok();
     }
 
     private async Task Authenticate(string id, string role)
@@ -85,15 +82,5 @@ public class AuthController : ControllerBase
         ClaimsIdentity identity = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType,
             ClaimsIdentity.DefaultRoleClaimType);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-    }
-
-    [HttpPost]
-    [Authorize]
-    [Route("logout")]
-    private async Task<IActionResult> Logout()
-    {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        _logger.LogInformation("Logout");
-        return Ok();
     }
 }

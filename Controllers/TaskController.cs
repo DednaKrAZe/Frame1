@@ -9,7 +9,7 @@ using TaskModel = Engineering.Models.Task;
 namespace Engineering.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Manager, Director")]
+[Authorize]
 [Route("tasks")]
 public class TaskController : ControllerBase
 {
@@ -24,6 +24,7 @@ public class TaskController : ControllerBase
 
     // получить список актуальных задач
     [HttpGet]
+    [Authorize(Roles = "Manager, Director")]
     public async Task<ActionResult<List<TaskModel>>> GetAllTasks()
     {
         var tasks = await _context.Tasks.Where(t => t.IsActual == true).ToListAsync();
@@ -46,12 +47,23 @@ public class TaskController : ControllerBase
             return NotFound();
         }
 
+        if (task.ExecutorId != null)
+        {
+            var userId = Int64.Parse(User.Identity.Name);
+            if (task.ExecutorId != userId && !User.IsInRole("Manager") && !User.IsInRole("Director"))
+            {
+                _logger.LogWarning("Forbidden for user {UserId}", userId);
+                return Forbid();
+            }
+        }
+
         _logger.LogInformation("Get task by id: {TaskId}", id);
         return Ok(task);
     }
 
     // создать задачу (не закончена)
     [HttpPost]
+    [Authorize(Roles = "Manager, Director")]
     public async Task<ActionResult> CreateTask([FromBody] TaskModel task)
     {
         try
@@ -78,6 +90,7 @@ public class TaskController : ControllerBase
     
     // обновить существующую задачу
     [HttpPut("{defect_id}")]
+    [Authorize(Roles = "Manager, Director")]
     public async Task<ActionResult> UpdateTask([FromBody] TaskRequest task, [FromRoute] int defectId)
     {
         try
@@ -126,4 +139,7 @@ public class TaskController : ControllerBase
             return StatusCode(500, $"Internal server error");
         }
     }
+    
+    // TODO: получить актуальные задачи пользователя по id
+    // TODO: получить выполненные задачи пользователя по id
 }

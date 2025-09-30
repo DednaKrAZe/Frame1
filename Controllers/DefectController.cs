@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Engineering.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Manager, Director")]
+[Authorize(Roles = "Manager, Director, Engineer")]
 [Route("defects")]
 public class DefectController : ControllerBase
 {
